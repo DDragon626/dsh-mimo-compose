@@ -1,0 +1,121 @@
+# dsh-mimo-compose bundle patch.
+#
+# Adds ONE agent preset — the `mimo-compose` mode — the same way the Web app
+# declares `standard` and `cordis`. Selecting the mode is the explicit opt-in:
+# the compose workflow contract and its skill are only mounted for sessions
+# bound to this preset, so no automatic task triage is installed anywhere.
+- insert:
+    - id: preset-mimo-compose
+      name: '@deepseek-ai/dsh-agent-preset'
+      config:
+        id: mimo-compose
+        name: MiMo Compose
+        description: 结构化工作流模式：决策澄清 → 工作树隔离 → 规格文档 → 实现 → 验证 → 独立评审 → 收尾交付。选中即进入，不参与自动触发。
+        order: 5
+        plugins:
+          - id: persona
+            name: '@deepseek-ai/dsh-persona'
+            config:
+              prefix: |
+                You are operating in MiMo Compose mode. This mode is selected, not inferred: a session bound to this preset is expected to follow the compose workflow, and a session bound to another preset must not use it.
+
+                Load the `compose-next` skill before doing workflow work, and follow it over any habit of yours. Its shape:
+                grill → worktree → spec → implement → verify → review → finalize → finish.
+
+                Non-negotiables:
+                - Never implement on `main`/`master` without explicit user consent; create a worktree with `worktree_create` first.
+                - One feature document per feature; never a second plan or report.
+                - No completion claim without fresh verification output in this turn.
+                - Review runs in a fresh subagent, strictly after verification, and is given the base SHA, head SHA, and exact diff command — never an implementer narrative.
+                - Never merge, push, or open a PR on your own initiative; report branch/base/head and ask how to finish.
+                - Decisions the user owns go through `ask_user_question`, one concern per call.
+
+                Your working directory is {{cwd}}.
+              suffix: Follow this mode's contract for the whole session.
+          - id: agent-instructions
+            name: '@deepseek-ai/dsh-agent-instructions'
+            config:
+              maxBytes: 65536
+          - id: tool-bash
+            name: '@deepseek-ai/dsh-tool-bash'
+            disabled: !!js process.platform === 'win32'
+          - id: tool-pwsh
+            name: '@deepseek-ai/dsh-tool-pwsh'
+            disabled: !!js process.platform !== 'win32'
+          - id: tool-fs
+            name: '@deepseek-ai/dsh-tool-fs'
+          - id: tool-fs-search
+            name: '@deepseek-ai/dsh-tool-fs-search'
+            config:
+              sampleOverCapGlobResults: false
+          - id: tool-jobs
+            name: '@deepseek-ai/dsh-tool-jobs'
+          # User and project skills stay visible in this mode too; the packaged
+          # compose-next skill is an additional root, not a replacement.
+          - id: skill-filesystem
+            name: '@deepseek-ai/dsh-skill-filesystem'
+          - id: mimo-compose-skills
+            name: dsh-mimo-compose/skills
+          - id: tool-skill
+            name: '@deepseek-ai/dsh-tool-skill'
+          - id: mimo-compose-worktree
+            name: dsh-mimo-compose/worktree
+          - id: compaction
+            name: cordis:group
+            group: true
+            isolate:
+              compaction: true
+              toolResultPruner: true
+            config:
+              - id: compaction-basic
+                name: '@deepseek-ai/dsh-compaction-basic'
+              - id: command-compact
+                name: '@deepseek-ai/dsh-command-compact'
+              - id: tool-result-pruner
+                name: '@deepseek-ai/dsh-compaction-tool-result-pruner'
+                config:
+                  thresholdChars: 8192
+                  headChars: 4096
+                  tailChars: 1024
+          - id: delegation
+            name: cordis:group
+            group: true
+            isolate:
+              workflowEngine: true
+            config:
+              - id: tool-subagent-control
+                name: '@deepseek-ai/dsh-tool-subagent-control'
+              - id: tool-subagent-list-agents
+                name: '@deepseek-ai/dsh-tool-subagent-control/list-agents'
+              - id: tool-subagent
+                name: '@deepseek-ai/dsh-tool-subagent'
+                config:
+                  provider: spawn
+                  toolName: subagent
+                  modelSelectionSettings: true
+                  backgroundMode: continuable
+              - id: tool-subagent-fork
+                name: '@deepseek-ai/dsh-tool-subagent'
+                config:
+                  provider: fork
+                  toolName: subagent_fork
+                  backgroundMode: continuable
+              - id: workflow-ptc
+                name: '@deepseek-ai/dsh-workflow-ptc'
+                config:
+                  provider: spawn
+              - id: tool-workflow
+                name: '@deepseek-ai/dsh-tool-workflow'
+          - id: tool-ask-user
+            name: '@deepseek-ai/dsh-tool-ask-user'
+          - id: tool-todo
+            name: '@deepseek-ai/dsh-tool-todo'
+            config:
+              allowParallelInProgress: true
+          - id: tool-web
+            name: '@deepseek-ai/dsh-tool-web'
+            config:
+              fetch: true
+              searchTimeoutMs: 60000
+          - id: present
+            name: '@deepseek-ai/dsh-tool-present'

@@ -1,0 +1,53 @@
+{
+  "name": "dsh-mimo-compose",
+  "version": "0.1.0",
+  "description": "MiMo-Compose workflow mode for DeepSeek Harness: the compose-next skill + preset-scoped skill root + git worktree tools",
+  "license": "MIT",
+  "type": "module",
+  "main": "src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./skills": "./src/skills.js",
+    "./worktree": "./src/worktree.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "src",
+    "skills",
+    "cordis.patch.yml",
+    "README.md"
+  ],
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "deepseek-harness",
+    "agent-preset",
+    "workflow",
+    "compose",
+    "worktree"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DDragon626/dsh-mimo-compose.git"
+  },
+  "bugs": {
+    "url": "https://github.com/DDragon626/dsh-mimo-compose/issues"
+  },
+  "homepage": "https://github.com/DDragon626/dsh-mimo-compose#readme",
+  "engines": {
+    "node": ">=20"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "^4.0.4"
+  },
+  "peerDependenciesMeta": {
+    "@deepseek-ai/cordis": {
+      "optional": true
+    }
+  }
+}
